@@ -122,9 +122,21 @@ class AdvancedVulcanAgent:
             analysis["primary_intent"] = "general"
 
         # 3. Missing-parameter guard — troubleshooting never requires material/thickness
+        # For general "how do I setup" questions without parameters, treat as informational query
         missing = self._check_missing_params(primary_intent, context)
         if missing and primary_intent != "troubleshooting":
-            return self._build_insufficient_state_response(primary_intent, missing)
+            # If this is a general setup question without specific parameters,
+            # treat it as informational query instead of requiring exact parameters
+            query_lower = user_message.lower().strip()
+            if primary_intent == "setup" and (
+                query_lower.startswith("how do")
+                or query_lower.startswith("what is")
+                or query_lower.startswith("how to")
+            ):
+                primary_intent = "general"
+                analysis["primary_intent"] = "general"
+            else:
+                return self._build_insufficient_state_response(primary_intent, missing)
 
         # 4. Retrieve evidence (multi-hop)
         retrieved = self._multi_hop_retrieval(user_message, analysis)
