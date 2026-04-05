@@ -4,6 +4,8 @@ FastAPI server for the Vulcan OmniPro 220 agent.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import json
@@ -21,11 +23,16 @@ app = FastAPI(title="Vulcan OmniPro 220 Agent API")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve built frontend statically (for single-service deploy on Railway)
+FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
+if FRONTEND_DIST.exists():
+    app.mount("/app", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
 
 # Global agent instance
 agent: Optional[VulcanAgent] = None
