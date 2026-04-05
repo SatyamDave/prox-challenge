@@ -33,25 +33,22 @@ app.add_middleware(
 FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
 if FRONTEND_DIST.exists() and (FRONTEND_DIST / "index.html").exists():
     print(f"Serving frontend from: {FRONTEND_DIST}")
-    
+
     # Mount assets at /assets/ so Vite's HTML references work
     app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="assets")
 
     @app.get("/")
     async def serve_frontend():
         return FileResponse(str(FRONTEND_DIST / "index.html"))
-    
-    # Serve root-level static files
-    @app.get("/{filename:path}")
-    async def serve_root_static(filename: str):
-        # Only serve specific static files, not API routes
-        static_files = ["favicon.svg", "icons.svg"]
-        if filename in static_files:
-            file_path = FRONTEND_DIST / filename
-            if file_path.exists():
-                return FileResponse(str(file_path))
-        # For any other non-API path, return 404
-        raise HTTPException(status_code=404, detail="Not found")
+
+    # Serve root-level static files explicitly
+    @app.get("/favicon.svg")
+    async def serve_favicon():
+        return FileResponse(str(FRONTEND_DIST / "favicon.svg"))
+
+    @app.get("/icons.svg")
+    async def serve_icons():
+        return FileResponse(str(FRONTEND_DIST / "icons.svg"))
 else:
     print(f"Frontend dist not found at {FRONTEND_DIST} - API only mode")
 
