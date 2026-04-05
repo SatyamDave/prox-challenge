@@ -29,14 +29,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve built frontend statically (for single-service deploy on Railway/Koyeb)
+# Serve built frontend statically (for single-service deploy on HF Spaces/Railway/Koyeb)
 FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
-if FRONTEND_DIST.exists():
+if FRONTEND_DIST.exists() and (FRONTEND_DIST / "index.html").exists():
+    print(f"Serving frontend from: {FRONTEND_DIST}")
     app.mount("/app", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
 
     @app.get("/")
     async def serve_frontend():
         return FileResponse(str(FRONTEND_DIST / "index.html"))
+else:
+    print(f"Frontend dist not found at {FRONTEND_DIST} - API only mode")
 
 # Global agent instance
 agent: Optional[VulcanAgent] = None
