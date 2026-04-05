@@ -80,34 +80,35 @@ async def startup_event():
 
     print("Initializing Vulcan OmniPro 220 Agent...")
 
-    # Check if knowledge base exists
-    kb_file = Path("knowledge_base.json")
+    try:
+        # Check if knowledge base exists - look in backend directory
+        kb_file = Path(__file__).parent / "knowledge_base.json"
 
-    if not kb_file.exists():
-        print("Knowledge base not found. Building from PDFs...")
-        extractor = KnowledgeExtractor()
-        knowledge_base = extractor.process_all_manuals()
+        if not kb_file.exists():
+            print("⚠️  Knowledge base not found. Starting in API-only mode.")
+            print("   To build the knowledge base, run: python knowledge_extractor.py")
+            return
 
-        # Also load the full KB with images
-        knowledge_base = extractor.get_knowledge_base()
-    else:
         print("Loading existing knowledge base...")
         with open(kb_file, 'r') as f:
-            kb_lite = json.load(f)
+            knowledge_base = json.load(f)
 
-        # Re-extract to get full images
-        extractor = KnowledgeExtractor()
-        knowledge_base = extractor.process_all_manuals()
+        print(f"Loaded knowledge base with {len(knowledge_base.get('text_chunks', []))} chunks")
 
-    # Build vector store
-    print("Building vector store...")
-    vector_store = build_vector_store_from_knowledge_base(knowledge_base)
+        # Build vector store
+        print("Building vector store...")
+        vector_store = build_vector_store_from_knowledge_base(knowledge_base)
 
-    # Initialize agent
-    print("Initializing agent...")
-    agent = VulcanAgent(vector_store, knowledge_base)
+        # Initialize agent
+        print("Initializing agent...")
+        agent = VulcanAgent(vector_store, knowledge_base)
 
-    print("✓ Agent ready!")
+        print("✓ Agent ready!")
+    except Exception as e:
+        print(f"⚠️  Warning: Agent initialization failed: {e}")
+        print("Starting in API-only mode. Chat endpoint will be unavailable.")
+        import traceback
+        traceback.print_exc()
 
 
 @app.get("/")
