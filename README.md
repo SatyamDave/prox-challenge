@@ -4,6 +4,12 @@
 
 ![Vulcan OmniPro 220](product.webp)
 
+## Video Walkthrough
+
+[![Video walkthrough](https://cdn.loom.com/sessions/thumbnails/6e9842fb18a74efa8b12e4e0a8fcb8ab-with-play.gif)](https://www.loom.com/share/6e9842fb18a74efa8b12e4e0a8fcb8ab)
+
+🎬 **[Watch the full demo walkthrough](https://www.loom.com/share/6e9842fb18a74efa8b12e4e0a8fcb8ab)**
+
 ## Quick Start (2 minutes)
 
 ```bash
