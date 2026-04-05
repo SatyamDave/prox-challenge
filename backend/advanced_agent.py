@@ -110,19 +110,20 @@ class AdvancedVulcanAgent:
     def chat(
         self, user_message: str, image_data: Optional[str] = None
     ) -> Dict[str, Any]:
-        # 1. LLM parses intent + context
+        # 1. LLM parses intent + context (with built-in cross-validation)
         analysis = self._llm_parse_query(user_message)
 
         primary_intent = analysis["primary_intent"]
         context = analysis["context"]
 
-        # 2. Out-of-domain guard
+        # 2. Never hard-block as out_of_domain
         if primary_intent == "out_of_domain":
-            return self._build_out_of_domain_response(user_message)
+            primary_intent = "general"
+            analysis["primary_intent"] = "general"
 
-        # 3. Missing-parameter guard (LLM-identified + deterministic check)
+        # 3. Missing-parameter guard — troubleshooting never requires material/thickness
         missing = self._check_missing_params(primary_intent, context)
-        if missing:
+        if missing and primary_intent != "troubleshooting":
             return self._build_insufficient_state_response(primary_intent, missing)
 
         # 4. Retrieve evidence (multi-hop)
@@ -273,23 +274,20 @@ class AdvancedVulcanAgent:
         intent = parsed.get("intent", "general")
         context = parsed.get("context", {})
 
-        # Cross-validate: if LLM says out_of_domain but regex finds welding-relevant keywords,
-        # use the regex fallback's classification instead. The LLM is too strict.
+        # Cross-validate: if LLM says out_of_domain, use regex classification.
+        # The LLM is too strict — never block legitimate queries.
         if intent == "out_of_domain":
             fallback = self._fallback_parse_query(user_message)
             fallback_intent = fallback.get("primary_intent", "general")
-            if fallback_intent != "out_of_domain":
-                # Use fallback's intent and merge context (fallback might have extracted params)
-                for key, value in fallback.get("context", {}).items():
-                    if not context.get(key) and value:
-                        context[key] = value
-                intent = fallback_intent
-                parsed["intent"] = fallback_intent
-                parsed["missing_params"] = [
-                    p
-                    for p in (parsed.get("missing_params") or [])
-                    if not context.get(p)
-                ]
+            # Always use fallback intent (which now returns "general" not "out_of_domain")
+            for key, value in fallback.get("context", {}).items():
+                if not context.get(key) and value:
+                    context[key] = value
+            intent = (
+                fallback_intent if fallback_intent != "out_of_domain" else "general"
+            )
+            parsed["intent"] = intent
+            parsed["missing_params"] = []
 
         # Cross-validate with regex fallbacks
         ql = user_message.lower()

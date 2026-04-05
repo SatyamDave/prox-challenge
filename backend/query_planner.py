@@ -75,6 +75,19 @@ class QueryPlanner:
                 "lcd",
                 "error",
                 "fault",
+                "feeding",
+                "wire feed",
+                "not feeding",
+                "stops working",
+                "stop working",
+                "mid-weld",
+                "wire jam",
+                "jammed",
+                "clogged",
+                "clogging",
+                "broken",
+                "fix",
+                "repair",
             ],
             "setup": [
                 "setup",
@@ -145,6 +158,8 @@ class QueryPlanner:
     def _determine_primary_intent(self, detected_types: List[str], query: str) -> str:
         """
         Determine what the user is primarily asking about.
+        Never return out_of_domain — route to 'general' instead.
+        The system should always try to help, even for comparison questions.
         """
         # Priority order for intent
         priority = [
@@ -162,9 +177,8 @@ class QueryPlanner:
             if intent in detected_types:
                 return intent
 
-        # If no specific welding-related intent is detected, classify as out_of_domain
-        # This catches nonsense, unrelated, or generic queries
-        return "out_of_domain"
+        # Never block as out_of_domain — treat as general informational query
+        return "general"
 
     def _extract_voltage(self, query: str, numbers: List[tuple]) -> Optional[str]:
         """Extract voltage from query."""
