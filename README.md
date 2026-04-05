@@ -1,92 +1,246 @@
-# Prox Founding Engineer Challenge
+# Executable Knowledge Engine For Physical Systems
 
-<img src="product.webp" alt="Vulcan OmniPro 220" width="400" /> <img src="product-inside.webp" alt="Vulcan OmniPro 220 — inside panel" width="400" />
+> Manuals are not text. They are compressed machine behavior. This project turns a welding manual into an executable knowledge system that can reason over state, simulate outcomes, and explain the machine visually.
 
-## The Product
+![Vulcan OmniPro 220](product.webp)
 
-The [Vulcan OmniPro 220](https://www.harborfreight.com/omnipro-220-industrial-multiprocess-welder-with-120240v-input-57812.html) is a multiprocess welding system sold by Harbor Freight. It supports four welding processes (MIG, Flux-Cored, TIG, and Stick), runs on both 120V and 240V input, and has an LCD-based synergic control system.
+## What This Is
 
-Its owner's manual is 48 pages of dense technical content. Duty cycle matrices across multiple voltages and amperages, polarity setup procedures that differ per welding process, wire feed mechanisms with specific tensioner calibrations, wiring schematics, troubleshooting matrices, weld diagnosis diagrams, and a full parts list.
+This is not a chatbot.
 
-This is exactly the kind of product Prox exists for. Nobody knows how to use this machine straight out of the box but has time to read 48 page manual, but a complicated machine needs expert-level support.
+This is a system that converts technical documentation for a physical product into a machine-understanding layer that can:
 
-Additional video: https://www.youtube.com/watch?v=kxGDoGcnhBw
+- reason over machine state
+- retrieve across text, tables, procedures, and diagrams
+- simulate outcomes from configuration changes
+- generate the right explanation format for the job
 
-## Your Job
+The current implementation targets the Vulcan OmniPro 220 multiprocess welder, but the architecture is meant for a broader class of complex physical systems.
 
-Build a multimodal reasoning agent for the Vulcan OmniPro 220 using the Claude Agent SDK. The agent must be able to answer deep technical questions about this product accurately, helpfully, and not just in text.
+## The Problem
 
-The manuals are in the `files/` directory.
+Technical support for physical products breaks because product knowledge does not live in plain text.
 
-**There is no limit to how far you can go.** You can integrate voice. You can build a full interactive experience. Sky is the limit. The more ambitious and polished, the better.
+A welder manual is not just paragraphs. It is:
 
-## What We're Testing
+- wiring topology
+- duty-cycle constraints
+- process-dependent polarity rules
+- setup procedures
+- troubleshooting logic
+- implicit technician knowledge
 
-### 1. Deep Technical Accuracy
+Traditional RAG systems flatten this into chunks and lose the structure that matters. They can quote a page, but they struggle to explain how the machine behaves.
 
-Your agent needs to answer questions like these correctly:
+## The Core Idea
 
-- "What's the duty cycle for MIG welding at 200A on 240V?"
-- "I'm getting porosity in my flux-cored welds. What should I check?"
-- "What polarity setup do I need for TIG welding? Which socket does the ground clamp go in?"
+Instead of retrieving text from manuals, this system:
 
-We will test with questions that require cross-referencing multiple manual sections, understanding visual content (diagrams, schematics, charts), and handling ambiguous questions that need clarification from the user.
+1. builds a structured model of the machine
+2. retrieves evidence across node types
+3. simulates behavior from the current state
+4. explains results with visual artifacts
 
-### 2. Multimodal Responses
+That changes the product from “ask questions about a manual” to “interact with a system that understands the machine.”
 
-This is the most important part. Your agent must not be text-only.
+## What The System Does
 
-- If someone asks about polarity setup, the agent should draw or show a diagram of which cable goes in which socket, not just describe it.
-- If the answer relates to a specific image in the manual (the wire feed mechanism, the front panel controls, the weld diagnosis examples), the agent should surface that image.
-- If a question is complex enough, the agent should generate interactive content: a duty cycle calculator, a troubleshooting flowchart, a settings configurator that takes process + material + thickness and outputs recommended wire speed and voltage.
+### 1. Structured Knowledge Extraction
 
-When something is too cognitively hard to explain in words, the agent should draw it. Real-time diagrams, interactive schematics, visual walkthroughs generated through code.
+The backend converts PDFs into typed knowledge:
 
-For your agent to handle these responses well you need to reverse engineer Claude artifacts. Here are two places where you can start:
-- https://claude.ai/artifacts (see how Claude renders interactive artifacts in chat)
-- https://www.reidbarber.com/blog/reverse-engineering-claude-artifacts
+- `text` nodes for explanatory sections
+- `table` nodes for constraint matrices and specs
+- `procedure` nodes for step-by-step operations
+- `diagram` candidates for visual configuration context
+- relationships connecting related nodes on the same topic
 
-### 3. Tone and Helpfulness
+### 2. Multi-Hop Retrieval
 
-Imagine your user just bought this welder and is standing in their garage trying to set it up. They're not an idiot, but they're not a professional welder either.
+Queries are expanded, retrieved across structured nodes, and enriched by following relationships. The system is designed to pull together the table, the setup guidance, and the visual context for the same question.
 
-### 4. Knowledge Extraction Quality
+### 3. Reasoning + Simulation
 
-The manual has a mix of text, tables, labeled diagrams, schematics, and decision matrices. Some critical information exists only in images (the welding process selection chart, the weld diagnosis photos, the wiring schematic). We want to see that your agent understands and presents the visual content, not just the text.
+The agent constructs an internal machine state and runs a lightweight simulation loop over it.
 
-## Tech Requirements
+Example:
 
-- Use the [Anthropic Claude Agent SDK](https://docs.anthropic.com) as the foundation for your agent.
-- The project must run locally with a single API key provided via `.env`.
-- You are responsible for your own API costs during development.
+`wrong polarity -> cable state -> current flow -> heat distribution -> weld outcome`
 
-## How to Present Your Work
+This is especially visible in polarity questions, where the system distinguishes between expected polarity and actual polarity, then predicts the effect of the mismatch.
 
-**This matters.** Your submission is not just the code — it's how you present it.
+### 4. Representation Engine
 
-- **Build a frontend.** The best way for us to evaluate your agent is if it has a clean, simple UI we can run immediately. This is realistically the only way to properly demo an agent like this.
-- **Hosting is a plus.** If you host it somewhere we can access without cloning, that's a strong signal. Not required, but it removes friction and shows initiative.
-- **Write a clear README.** Explain how your agent works, what design decisions you made, how knowledge is extracted and represented, and how to run it. Your documentation will be evaluated — we want to see how you think and communicate, not just how you code.
-- **Video walkthrough is a huge plus.** Record yourself demoing the agent and explaining your approach. Walk through the hard questions, show how it handles multimodal responses, explain your architecture. This gives us a much richer picture of your work than code alone.
+The response is not locked to text. The system chooses an artifact based on the task:
 
-We should be running your agent within 2 minutes of cloning your repo:
+- polarity visualizer
+- duty-cycle visualizer
+- troubleshooting tree
+- parameter explorer
+- interactive spec table
 
-```bash
-git clone <your-fork>
-cd <your-fork>
-cp .env.example .env   # we plug in our own Anthropic API key
-# your install command (npm install, uv install, etc.)
-# your run command (npm run dev, python app.py, etc.)
+## Example
+
+User asks:
+
+`What happens if polarity is reversed?`
+
+The system:
+
+1. constructs machine state
+2. infers expected polarity for the process
+3. simulates reversed current flow
+4. propagates effects to heat balance and weld quality
+5. visualizes the failure mode
+
+That is the difference between documentation retrieval and machine reasoning.
+
+## Demo Narrative
+
+Open the demo with:
+
+> Manuals are not text. They are systems. So I built a system that understands machines.
+
+Then show three moments:
+
+### 1. Polarity Simulation
+
+Ask:
+
+`What happens if polarity is reversed for TIG?`
+
+Show:
+
+- machine state
+- expected vs actual polarity
+- current-flow effect
+- predicted weld failure mode
+- visual polarity artifact
+
+Frame it as:
+
+> This is not answering from a paragraph. It is simulating the consequence of a machine configuration.
+
+### 2. Duty Cycle Reasoning
+
+Ask:
+
+`What's the duty cycle for MIG welding at 200A on 240V?`
+
+Show:
+
+- structured spec retrieval
+- duty-cycle visualization
+- operating window in a 10-minute cycle
+
+Frame it as:
+
+> The answer is not just a number. It is an operating constraint represented visually.
+
+### 3. Troubleshooting
+
+Ask:
+
+`I'm getting porosity in my flux-cored welds. What should I check?`
+
+Show:
+
+- reasoning summary
+- simulated diagnosis path
+- troubleshooting tree
+
+Frame it as:
+
+> The system turns diagnostic knowledge into an actionable path instead of a wall of advice.
+
+## Why This Matters
+
+This is a first step toward replacing human technical support for complex physical products.
+
+The value is not only better answers. It is a new interface for product knowledge:
+
+- faster support resolution
+- better onboarding for non-experts
+- lower dependence on tribal knowledge
+- a foundation for simulation-driven support experiences
+
+## Architecture
+
+### Backend
+
+- `backend/knowledge_extractor.py`
+  Extracts structured nodes and lightweight relationships from manuals.
+
+- `backend/vector_store.py`
+  Indexes structured knowledge nodes for retrieval.
+
+- `backend/advanced_agent.py`
+  Runs retrieval, evidence synthesis, simulation, artifact selection, and guarded fallback behavior.
+
+- `backend/main.py`
+  Serves the API and exposes the technical response package.
+
+### Frontend
+
+- `frontend/src/App.tsx`
+  Chat UI with reasoning summary, evidence, assumptions, and simulation loop.
+
+- `frontend/src/components/ArtifactRenderer.tsx`
+  Renders visual explanations including the polarity simulator and duty-cycle visualizer.
+
+## Response Shape
+
+The system returns a structured response with the pieces needed for product-grade UX:
+
+```json
+{
+  "state": { "process": "TIG", "connections": { "torch": "positive" } },
+  "simulation": [
+    { "step": 1, "event": "Apply cable state", "effect": "Torch on positive" }
+  ],
+  "artifact": { "type": "polarity_diagram", "data": {} },
+  "explanation": "Reversed polarity shifts heat and destabilizes the arc.",
+  "confidence": { "label": "medium", "score": 0.72 },
+  "assumptions": ["Assumed steel unless material specified."]
+}
 ```
 
-If it takes longer than that to set up, that's a problem.
+## Quick Start
 
-## What to Submit
+```bash
+cd prox-challenge
 
-1. Fork this repo.
-2. Build your solution.
-3. Submit your fork URL through the form at [useprox.com/join/challenge](https://useprox.com/join/challenge).
+cd backend
+pip install -r requirements.txt
+python main.py
+```
 
-## What Happens Next
+In a second terminal:
 
-We review submissions on a rolling basis and respond to every single one within a few days. Good luck.
+```bash
+cd prox-challenge/frontend
+npm install
+npm run dev
+```
+
+Then open [http://localhost:5173](http://localhost:5173).
+
+## Best Demo Queries
+
+- `What happens if polarity is reversed for TIG?`
+- `What's the duty cycle for MIG welding at 200A on 240V?`
+- `I'm getting porosity in my flux-cored welds. What should I check?`
+- `What are the recommended settings for welding 1/4 inch mild steel?`
+
+## What I Would Build Next
+
+- higher-fidelity diagram extraction from PDFs
+- richer executable state models for wire feed, gas flow, and thermal limits
+- interactive state editing in the UI so users can modify machine setup directly
+- support workflows that auto-generate technician-grade visual instructions
+
+## Bottom Line
+
+This project is a prototype for a new category of support software:
+
+an executable knowledge engine for physical systems.

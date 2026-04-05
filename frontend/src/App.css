@@ -1,0 +1,77 @@
+:root {
+  color: #0f172a;
+  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f6f1e8;
+  color: #0f172a;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+code {
+  font-family: "SF Mono", "IBM Plex Mono", "Roboto Mono", monospace;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.app-display {
+  font-family: "Space Grotesk", "Avenir Next Condensed", "Franklin Gothic Medium", sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.app-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.support-markdown {
+  color: #334155;
+  line-height: 1.7;
+}
+
+.support-markdown p {
+  margin: 0.4rem 0;
+}
+
+.support-markdown strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.support-markdown ul {
+  margin: 0.5rem 0;
+  padding-left: 1.1rem;
+}
+
+.support-markdown li {
+  margin: 0.2rem 0;
+}
+
+.support-markdown code {
+  background: rgba(15, 23, 42, 0.05);
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.88em;
+}
